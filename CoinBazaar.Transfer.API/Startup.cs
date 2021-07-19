@@ -1,9 +1,15 @@
+using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using CoinBazaar.Transfer.Application.Commands;
+using CoinBazaar.Transfer.Application.Infrastructure.AutofacModules;
+using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using System;
 
 namespace CoinBazaar.Transfer.API
 {
@@ -16,7 +22,6 @@ namespace CoinBazaar.Transfer.API
 
         public IConfiguration Configuration { get; }
 
-        // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
 
@@ -25,6 +30,14 @@ namespace CoinBazaar.Transfer.API
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "CoinBazaar.Transfer.API", Version = "v1" });
             });
+            services.AddAutoMapper(typeof(Startup));
+            services.AddMediatR(typeof(CreateTransferCommand));
+
+            var container = new ContainerBuilder();
+            container.Populate(services);
+
+            container.RegisterModule(new MediatorModule());
+            container.RegisterModule(new ApplicationModule(Configuration["ConnectionString"]));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

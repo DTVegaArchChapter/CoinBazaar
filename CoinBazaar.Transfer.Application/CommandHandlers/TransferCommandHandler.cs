@@ -1,10 +1,10 @@
-﻿using CoinBazaar.Transfer.Application.Command;
+﻿using CoinBazaar.Transfer.Application.Commands;
 using MediatR;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace CoinBazaar.Transfer.Application.CommandHandler
+namespace CoinBazaar.Transfer.Application.CommandHandlers
 {
     public class TransferCommandHandler : IRequestHandler<CreateTransferCommand, bool>
     {

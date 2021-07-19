@@ -1,6 +1,6 @@
 ﻿using MediatR;
 
-namespace CoinBazaar.Transfer.Application.Command
+namespace CoinBazaar.Transfer.Application.Commands
 {
     public class CreateTransferCommand : IRequest<bool>
     {

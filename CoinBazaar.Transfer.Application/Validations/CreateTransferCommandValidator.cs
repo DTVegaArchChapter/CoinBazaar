@@ -1,4 +1,4 @@
-﻿using CoinBazaar.Transfer.Application.Command;
+﻿using CoinBazaar.Transfer.Application.Commands;
 using FluentValidation;
 using Microsoft.Extensions.Logging;
 
