@@ -1,4 +1,5 @@
 ﻿using CoinBazaar.Infrastructure.EventBus;
+using CoinBazaar.Infrastructure.Models;
 using CoinBazaar.Transfer.Application.Commands;
 using CoinBazaar.Transfer.Domain;
 using MediatR;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace CoinBazaar.Transfer.Application.CommandHandlers
 {
-    public class TransferCommandHandler : IRequestHandler<CreateTransferCommand, bool>
+    public class TransferCommandHandler : IRequestHandler<CreateTransferCommand, DomainCommandResponse>
     {
         private readonly IEventRepository _eventRepository;
         public TransferCommandHandler(IEventRepository eventRepository)
@@ -16,15 +17,13 @@ namespace CoinBazaar.Transfer.Application.CommandHandlers
             _eventRepository = eventRepository;
         }
 
-        public async Task<bool> Handle(CreateTransferCommand request, CancellationToken cancellationToken)
+        public async Task<DomainCommandResponse> Handle(CreateTransferCommand request, CancellationToken cancellationToken)
         {
-            var aggregateRoot = new TransferAggregateRoot();
+            var aggregateRoot = new TransferAggregateRoot(Guid.NewGuid());
 
-            var domainEvent = await aggregateRoot.CreateTransfer(request.FromWallet, request.ToWallet, request.Amount);
+            var domainEventResult = await aggregateRoot.CreateTransfer(request.FromWallet, request.ToWallet, request.Amount);
 
-            return await _eventRepository.Publish(domainEvent.EventData);
-
-            //return domainCommandResponse??
+            return await _eventRepository.Publish(domainEventResult);
         }
     }
 }

@@ -18,10 +18,6 @@ namespace CoinBazaar.Transfer.Application.Infrastructure.AutofacModules
 
         protected override void Load(ContainerBuilder builder)
         {
-            builder.RegisterType<EventRepository>()
-                .As<IEventRepository>()
-                .InstancePerLifetimeScope();
-
             //builder.Register(c => new TransferQueries(QueriesConnectionString))
             //    .As<ITransferQueries>()
             //    .InstancePerLifetimeScope();

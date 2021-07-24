@@ -1,9 +1,10 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
+using CoinBazaar.Infrastructure.Aggregates;
 using CoinBazaar.Infrastructure.EventBus;
 using CoinBazaar.Transfer.Application.CommandHandlers;
 using CoinBazaar.Transfer.Application.Infrastructure.AutofacModules;
-using EventStore.ClientAPI;
+using EventStore.Client;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -34,15 +35,18 @@ namespace CoinBazaar.Transfer.API
             services.AddAutoMapper(typeof(Startup));
             services.AddMediatR(typeof(TransferCommandHandler));
 
-            var eventStoreConnection = EventStoreConnection.Create(
-                connectionString: Configuration.GetValue<string>("EventStore:ConnectionString"),
-                builder: ConnectionSettings.Create().KeepReconnecting(),
-                connectionName: Configuration.GetValue<string>("EventStore:ConnectionName"));
+            var eventStoreConnection = EventStoreClientSettings.Create(
+                connectionString: Configuration.GetValue<string>("EventStore:ConnectionString"));
 
-            eventStoreConnection.ConnectAsync().GetAwaiter().GetResult();
+            var eventStoreClient = new EventStoreClient(eventStoreConnection);
 
-            services.AddSingleton(eventStoreConnection);
-            services.AddScoped<IEventRepository, EventRepository>();
+            services.AddSingleton(eventStoreClient);
+            
+            services.AddScoped<IEventRepository, EventRepository>(eventRepository => 
+            new EventRepository(
+                eventRepository.GetService<EventStoreClient>(), 
+                Configuration.GetValue<string>("EventStore:AggregateStream"))
+            );
 
             var container = new ContainerBuilder();
             container.Populate(services);
