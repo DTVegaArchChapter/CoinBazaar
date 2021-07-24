@@ -1,7 +1,9 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using CoinBazaar.Transfer.Application.Commands;
+using CoinBazaar.Infrastructure.EventBus;
+using CoinBazaar.Transfer.Application.CommandHandlers;
 using CoinBazaar.Transfer.Application.Infrastructure.AutofacModules;
+using EventStore.ClientAPI;
 using MediatR;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -24,14 +26,23 @@ namespace CoinBazaar.Transfer.API
 
         public void ConfigureServices(IServiceCollection services)
         {
-
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "CoinBazaar.Transfer.API", Version = "v1" });
             });
             services.AddAutoMapper(typeof(Startup));
-            services.AddMediatR(typeof(CreateTransferCommand));
+            services.AddMediatR(typeof(TransferCommandHandler));
+
+            var eventStoreConnection = EventStoreConnection.Create(
+                connectionString: Configuration.GetValue<string>("EventStore:ConnectionString"),
+                builder: ConnectionSettings.Create().KeepReconnecting(),
+                connectionName: Configuration.GetValue<string>("EventStore:ConnectionName"));
+
+            eventStoreConnection.ConnectAsync().GetAwaiter().GetResult();
+
+            services.AddSingleton(eventStoreConnection);
+            services.AddScoped<IEventRepository, EventRepository>();
 
             var container = new ContainerBuilder();
             container.Populate(services);
