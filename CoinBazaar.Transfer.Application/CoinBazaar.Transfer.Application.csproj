@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="Infrastructure\Middleware\" />
+    <Folder Include="QueryHandler\" />
+    <Folder Include="Query\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EventStore.Client.Grpc.Streams" Version="21.2.0" />
+    <PackageReference Include="FluentValidation" Version="10.3.0" />
+    <PackageReference Include="MediatR" Version="9.0.0" />
+    <PackageReference Include="MediatR.Extensions.Autofac.DependencyInjection" Version="7.3.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\CoinBazaar.Transfer.Domain\CoinBazaar.Transfer.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

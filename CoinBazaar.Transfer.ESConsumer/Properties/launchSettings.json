@@ -1,0 +1,11 @@
+﻿{
+  "profiles": {
+    "CoinBazaar.Transfer.ESConsumer": {
+      "commandName": "Project",
+      "dotnetRunMessages": "true",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
