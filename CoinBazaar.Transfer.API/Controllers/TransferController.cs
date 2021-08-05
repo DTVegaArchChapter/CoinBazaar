@@ -4,7 +4,6 @@ using CoinBazaar.Transfer.Application.Commands;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
-using CoinBazaar.Infrastructure.Models;
 
 namespace CoinBazaar.Transfer.API.Controllers
 {
@@ -23,7 +22,7 @@ namespace CoinBazaar.Transfer.API.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateTransferAsync(CreateTransferRequest request)
         {
-            DomainCommandResponse domainResponse = await _mediator.Send(_mapper.Map<CreateTransferCommand>(request));
+            var domainResponse = await _mediator.Send(_mapper.Map<CreateTransferCommand>(request));
 
             return Ok(domainResponse);
         }

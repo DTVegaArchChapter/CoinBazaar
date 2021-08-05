@@ -1,6 +1,5 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
-using CoinBazaar.Infrastructure.Aggregates;
 using CoinBazaar.Infrastructure.EventBus;
 using CoinBazaar.Transfer.Application.CommandHandlers;
 using CoinBazaar.Transfer.Application.Infrastructure.AutofacModules;
@@ -12,7 +11,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using System;
 
 namespace CoinBazaar.Transfer.API
 {
@@ -41,10 +39,10 @@ namespace CoinBazaar.Transfer.API
             var eventStoreClient = new EventStoreClient(eventStoreConnection);
 
             services.AddSingleton(eventStoreClient);
-            
-            services.AddScoped<IEventRepository, EventRepository>(eventRepository => 
+
+            services.AddScoped<IEventRepository, EventRepository>(eventRepository =>
             new EventRepository(
-                eventRepository.GetService<EventStoreClient>(), 
+                eventRepository.GetService<EventStoreClient>(),
                 Configuration.GetValue<string>("EventStore:AggregateStream"))
             );
 

@@ -1,0 +1,14 @@
+{
+  "profiles": {
+    "CoinBazaar.Transfer.ESConsumer.gRPC": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": "true"
+    },
+    "Docker": {
+      "commandName": "Docker"
+    }
+  }
+}

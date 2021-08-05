@@ -1,7 +1,4 @@
 ﻿using Autofac;
-using CoinBazaar.Infrastructure.EventBus;
-using CoinBazaar.Transfer.Application.CommandHandlers;
-using System.Reflection;
 
 namespace CoinBazaar.Transfer.Application.Infrastructure.AutofacModules
 {

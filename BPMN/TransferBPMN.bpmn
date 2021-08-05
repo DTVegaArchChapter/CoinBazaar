@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_17q888s" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="4.9.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.15.0">
+  <bpmn:process id="TransferBPMN" name="TransferBPMN" isExecutable="true">
+    <bpmn:startEvent id="StartEvent_1">
+      <bpmn:outgoing>Flow_1yrah10</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1yrah10" sourceRef="StartEvent_1" targetRef="ServiceTask_TransferStarted" />
+    <bpmn:serviceTask id="ServiceTask_DeductAmountFromSenderWallet" name="Deduct Amount From Sender Wallet" camunda:type="external" camunda:topic="DeductAmountFromSenderWalletTopic">
+      <bpmn:incoming>Flow_16bzt7g</bpmn:incoming>
+      <bpmn:outgoing>Flow_16tzzwm</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_16bzt7g" sourceRef="ServiceTask_TransferStarted" targetRef="ServiceTask_DeductAmountFromSenderWallet" />
+    <bpmn:serviceTask id="ServiceTask_TransferStarted" name="Transfer Started" camunda:type="external" camunda:topic="TransferStartedTopic">
+      <bpmn:incoming>Flow_1yrah10</bpmn:incoming>
+      <bpmn:outgoing>Flow_16bzt7g</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_16tzzwm" sourceRef="ServiceTask_DeductAmountFromSenderWallet" targetRef="ServiceTask_AddAmountToRecipientWallet" />
+    <bpmn:serviceTask id="ServiceTask_AddAmountToRecipientWallet" name="Add Amount to Recipient Wallet" camunda:type="external" camunda:topic="AddAmountToRecipientWalletTopic">
+      <bpmn:incoming>Flow_16tzzwm</bpmn:incoming>
+      <bpmn:outgoing>Flow_0wpcopr</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:task id="Activity_021srrz" name="Transfer Completed">
+      <bpmn:incoming>Flow_0wpcopr</bpmn:incoming>
+      <bpmn:outgoing>Flow_07llqg3</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="Flow_0wpcopr" sourceRef="ServiceTask_AddAmountToRecipientWallet" targetRef="Activity_021srrz" />
+    <bpmn:endEvent id="Event_0fzzp6z">
+      <bpmn:incoming>Flow_07llqg3</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_07llqg3" sourceRef="Activity_021srrz" targetRef="Event_0fzzp6z" />
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="TransferBPMN">
+      <bpmndi:BPMNEdge id="Flow_07llqg3_di" bpmnElement="Flow_07llqg3">
+        <di:waypoint x="810" y="117" />
+        <di:waypoint x="862" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0wpcopr_di" bpmnElement="Flow_0wpcopr">
+        <di:waypoint x="660" y="117" />
+        <di:waypoint x="710" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16tzzwm_di" bpmnElement="Flow_16tzzwm">
+        <di:waypoint x="510" y="117" />
+        <di:waypoint x="560" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_16bzt7g_di" bpmnElement="Flow_16bzt7g">
+        <di:waypoint x="360" y="117" />
+        <di:waypoint x="410" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1yrah10_di" bpmnElement="Flow_1yrah10">
+        <di:waypoint x="215" y="117" />
+        <di:waypoint x="260" y="117" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_1">
+        <dc:Bounds x="179" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_07fresq_di" bpmnElement="ServiceTask_DeductAmountFromSenderWallet">
+        <dc:Bounds x="410" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1xekbru_di" bpmnElement="ServiceTask_TransferStarted">
+        <dc:Bounds x="260" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1138c4u_di" bpmnElement="ServiceTask_AddAmountToRecipientWallet">
+        <dc:Bounds x="560" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_021srrz_di" bpmnElement="Activity_021srrz">
+        <dc:Bounds x="710" y="77" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0fzzp6z_di" bpmnElement="Event_0fzzp6z">
+        <dc:Bounds x="862" y="99" width="36" height="36" />
+      </bpmndi:BPMNShape>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>
