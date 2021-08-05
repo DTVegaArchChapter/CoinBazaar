@@ -1,7 +1,7 @@
 ﻿using Autofac;
 using CoinBazaar.Transfer.Application.Behaviors;
-using CoinBazaar.Transfer.Application.Commands;
 using CoinBazaar.Transfer.Application.CommandHandlers;
+using CoinBazaar.Transfer.Application.Commands;
 using CoinBazaar.Transfer.Application.Validations;
 using FluentValidation;
 using MediatR;

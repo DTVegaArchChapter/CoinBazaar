@@ -11,7 +11,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="EventStore.Client.Grpc.Streams" Version="21.2.0" />
     <PackageReference Include="FluentValidation" Version="10.3.0" />
     <PackageReference Include="MediatR" Version="9.0.0" />
     <PackageReference Include="MediatR.Extensions.Autofac.DependencyInjection" Version="7.3.0" />

@@ -4,6 +4,7 @@ using CoinBazaar.Infrastructure.EventBus;
 using CoinBazaar.Infrastructure.Helpers;
 using CoinBazaar.Transfer.Domain.Events;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace CoinBazaar.Transfer.Domain
@@ -25,9 +26,15 @@ namespace CoinBazaar.Transfer.Domain
 
         public async Task<DomainEventResult> CreateTransfer(string fromWallet, string toWallet, decimal amount)
         {
-            var @event = new TransferCreated(fromWallet, toWallet, amount);
+            var processParameters = new List<KeyValuePair<string, object>>();
+            processParameters.Add(new KeyValuePair<string, object>("TransferId", TransferId));
+            processParameters.Add(new KeyValuePair<string, object>("FromWallet", fromWallet));
+            processParameters.Add(new KeyValuePair<string, object>("ToWallet", toWallet));
+            processParameters.Add(new KeyValuePair<string, object>("Amount", amount));
 
-            return await DomainResponseHelper.CreateDomainResponse(TransferId, @event, null);
+            var @event = new TransferCreated(fromWallet, toWallet, amount, Guid.NewGuid(), processParameters);
+
+            return await DomainResponseHelper.CreateDomainResponse(TransferId, true, @event, null);
         }
     }
 }

@@ -19,3 +19,7 @@ services:
       - "443"
     volumes:
       - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+
+  coinbazaar.transfer.esconsumer.grpc:
+    volumes:
+      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
