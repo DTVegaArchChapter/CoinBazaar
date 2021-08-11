@@ -16,5 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CoinBazaar.Infrastructure\CoinBazaar.Infrastructure.csproj" />
+    <ProjectReference Include="..\CoinBazaar.Transfer.Domain\CoinBazaar.Transfer.Domain.csproj" />
   </ItemGroup>
 </Project>
