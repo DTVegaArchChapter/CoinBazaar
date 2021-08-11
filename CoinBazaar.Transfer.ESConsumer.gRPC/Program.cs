@@ -1,4 +1,5 @@
 using CoinBazaar.Infrastructure.Camunda;
+using CoinBazaar.Infrastructure.EventBus;
 using CoinBazaar.Infrastructure.Mongo;
 using CoinBazaar.Infrastructure.Mongo.Data;
 using EventStore.Client;
@@ -27,6 +28,19 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
 
                     EventStoreOptions options = configuration.GetSection("EventStore").Get<EventStoreOptions>();
                     services.AddSingleton(options);
+
+                    var eventStoreConnection = EventStoreClientSettings.Create(
+                        connectionString: configuration.GetValue<string>("EventStore:ConnectionStringESDB"));
+
+                    var eventStoreClient = new EventStoreClient(eventStoreConnection);
+
+                    services.AddSingleton(eventStoreClient);
+
+                    services.AddSingleton<IEventRepository, EventRepository>(eventRepository =>
+                    new EventRepository(
+                        eventRepository.GetService<EventStoreClient>(),
+                        configuration.GetValue<string>("EventStore:AggregateStream"))
+                    );
 
                     var mongoConfig = new MongoServerConfig();
                     configuration.Bind(mongoConfig);

@@ -1,6 +1,8 @@
+using CoinBazaar.Infrastructure.Aggregates;
 using CoinBazaar.Infrastructure.Camunda;
 using CoinBazaar.Infrastructure.EventBus;
 using CoinBazaar.Infrastructure.Mongo.Data;
+using CoinBazaar.Transfer.Domain;
 using EventStore.Client;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -22,19 +24,22 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
         private readonly EventStoreOptions _eventStoreOptions;
         private readonly BPMContext _bpmContext;
         private readonly IBPMNRepository _bpmnRepository;
+        private readonly IEventRepository _eventRepository;
 
         public ConsumerWorker(
             ILogger<ConsumerWorker> logger,
             EventStorePersistentSubscriptionsClient eventStorePersistentSubscription,
             EventStoreOptions eventStoreOptions,
             BPMContext bpmContext,
-            IBPMNRepository bpmnRepository)
+            IBPMNRepository bpmnRepository,
+            IEventRepository eventRepository)
         {
             _logger = logger;
             _eventStorePersistentSubscription = eventStorePersistentSubscription;
             _eventStoreOptions = eventStoreOptions;
             _bpmContext = bpmContext;
             _bpmnRepository = bpmnRepository;
+            _eventRepository = eventRepository;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -113,10 +118,18 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
 
                     _bpmnRepository.StartProcessInstance(processStarterEvent.ProcessName, processStarterEvent.ProcessParameters);
                 }
-                else
-                {
-                    //Redirect to aggregateRoot for apply all events.
-                }
+
+                //Redirect to aggregateRoot for apply all events.
+
+                var events = await _eventRepository.GetAllEvents(metadata.StreamId);
+
+                var manager = new Infrastructure.Aggregates.AggregateManager<TransferAggregateRoot>();
+
+                var aggregateRoot = manager.ApplyAll(metadata.StreamId, events);
+
+                //Read db için aggregate kullanýlacak
+
+
 
                 //return Task.CompletedTask;
 
