@@ -6,9 +6,9 @@
 
   <ItemGroup>
     <PackageReference Include="Camunda.Api.Client" Version="2.6.0" />
-    <PackageReference Include="EventStore.Client.Grpc.Streams" Version="20.6.1" />
+    <PackageReference Include="EventStore.Client.Grpc.Streams" Version="21.2.0" />
     <PackageReference Include="Grpc.Net.Client" Version="2.38.0" />
-    <PackageReference Include="MongoDB.Driver" Version="2.13.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.13.1" />
     <PackageReference Include="System.Collections" Version="4.3.0" />
   </ItemGroup>
 

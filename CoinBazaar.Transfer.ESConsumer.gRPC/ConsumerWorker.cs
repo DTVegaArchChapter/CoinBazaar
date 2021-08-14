@@ -1,22 +1,23 @@
-using CoinBazaar.Infrastructure.Aggregates;
-using CoinBazaar.Infrastructure.Camunda;
-using CoinBazaar.Infrastructure.EventBus;
-using CoinBazaar.Infrastructure.Mongo.Data;
-using CoinBazaar.Transfer.Domain;
-using EventStore.Client;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
-using System;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace CoinBazaar.Transfer.ESConsumer.gRPC
 {
+    using System;
+    using System.Text;
+    using System.Text.Json;
+    using System.Threading;
+    using System.Threading.Tasks;
+
+    using CoinBazaar.Infrastructure.Camunda;
+    using CoinBazaar.Infrastructure.EventBus;
+    using CoinBazaar.Infrastructure.Mongo.Data;
+    using CoinBazaar.Transfer.Domain;
+
+    using EventStore.Client;
+
+    using Microsoft.Extensions.Hosting;
+    using Microsoft.Extensions.Logging;
+
+    using MongoDB.Driver;
+
     public class ConsumerWorker : BackgroundService
     {
         private readonly ILogger<ConsumerWorker> _logger;
@@ -48,7 +49,11 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
 
             try
             {
-                await _eventStorePersistentSubscription.CreateAsync($"$ce-{_eventStoreOptions.AggregateStream}", _eventStoreOptions.PersistentSubscriptionGroup, new PersistentSubscriptionSettings(startFrom: StreamPosition.End));
+                await _eventStorePersistentSubscription.CreateAsync(
+                    $"$ce-{_eventStoreOptions.AggregateStream}", 
+                    _eventStoreOptions.PersistentSubscriptionGroup, 
+                    new PersistentSubscriptionSettings(startFrom: StreamPosition.End), 
+                    cancellationToken: stoppingToken);
             }
             catch (InvalidOperationException ex)
             {
@@ -57,33 +62,21 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
                     throw;
                 }
             }
-            catch (Exception ex)
-            {
-
-                throw;
-            }
 
 
-            try
-            {
-                _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
+            _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
 
-                //while (!stoppingToken.IsCancellationRequested)
-                {
+            var subscriptionResult = await _eventStorePersistentSubscription.SubscribeAsync(
+                                         $"$ce-{_eventStoreOptions.AggregateStream}",
+                                         _eventStoreOptions.PersistentSubscriptionGroup,
+                                         async (subscription, evt, retryCount, cancelToken) => await HandleEvent(evt),
+                                         cancellationToken: stoppingToken,
+                                         subscriptionDropped: (subscription, reason, e) =>
+                                             {
+                                                 e.ToString();
+                                             });
 
-                    await _eventStorePersistentSubscription.SubscribeAsync($"$ce-{_eventStoreOptions.AggregateStream}", _eventStoreOptions.PersistentSubscriptionGroup,
-                    async (subscription, evt, retryCount, cancelToken) =>
-                    {
-                        await HandleEvent(evt);
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-
-                throw;
-            }
-
+            subscriptionResult.ToString();
         }
 
         private async Task HandleEvent(ResolvedEvent @event)

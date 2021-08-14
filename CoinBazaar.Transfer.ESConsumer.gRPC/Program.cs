@@ -11,6 +11,9 @@ using System;
 
 namespace CoinBazaar.Transfer.ESConsumer.gRPC
 {
+    using System.Net.Http;
+    using System.Security.Cryptography.X509Certificates;
+
     public class Program
     {
         public static void Main(string[] args)
@@ -24,23 +27,19 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
                 {
                     IConfiguration configuration = hostContext.Configuration;
 
-                    EventStoreOptions eventStoreOptions = configuration.GetSection("EventStore").Get<EventStoreOptions>();
-
                     EventStoreOptions options = configuration.GetSection("EventStore").Get<EventStoreOptions>();
                     services.AddSingleton(options);
 
-                    var eventStoreConnection = EventStoreClientSettings.Create(
-                        connectionString: configuration.GetValue<string>("EventStore:ConnectionStringESDB"));
+                    var eventStoreConnection = EventStoreClientSettings.Create(connectionString: configuration.GetValue<string>("EventStore:ConnectionString"));
 
-                    var eventStoreClient = new EventStoreClient(eventStoreConnection);
+                    //var eventStoreClient = new EventStoreClient(eventStoreConnection);
 
-                    services.AddSingleton(eventStoreClient);
+                    //services.AddSingleton(eventStoreClient);
 
-                    services.AddSingleton<IEventRepository, EventRepository>(eventRepository =>
-                    new EventRepository(
-                        eventRepository.GetService<EventStoreClient>(),
-                        configuration.GetValue<string>("EventStore:AggregateStream"))
-                    );
+                    services.AddSingleton<IEventRepository, EventRepository>(
+                        eventRepository => new EventRepository(
+                            eventRepository.GetService<EventStoreClient>(),
+                            configuration.GetValue<string>("EventStore:AggregateStream")));
 
                     var mongoConfig = new MongoServerConfig();
                     configuration.Bind(mongoConfig);
@@ -48,34 +47,16 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
                     var bpmContext = new BPMContext(mongoConfig.MongoDB);
 
                     services.AddSingleton(bpmContext);
-                    services.AddEventStorePersistentSubscriptionsClient(new Uri(configuration.GetValue<string>("EventStore:ConnectionString")),
-                        () =>
-                        new System.Net.Http.HttpClientHandler
-                        {
-                            ServerCertificateCustomValidationCallback =
-                                (message, certificate2, x509Chain, sslPolicyErrors) => true // ignore https
-                        }
-                    );
+                    services.AddEventStorePersistentSubscriptionsClient(
+                        configuration.GetValue<string>("EventStore:ConnectionString"),
+                        x => x.CreateHttpMessageHandler = () => new HttpClientHandler
+                                                                                {
+                                                                                    ServerCertificateCustomValidationCallback = (_, _, _, _) => true
+                                                                                });
 
-                    services.AddSingleton<IBPMNRepository, CamundaRepository>(camundaRepository =>
-                    new CamundaRepository(configuration.GetValue<string>("Camunda:EngineUrl"))
-                    );
-                    //var eventStoreClient = new EventStorePersistentSubscriptionsClient(new EventStoreClientSettings
-                    //{
-
-                    //    CreateHttpMessageHandler = () =>
-                    //        new HttpClientHandler
-                    //        {
-                    //            ServerCertificateCustomValidationCallback =
-                    //                (message, certificate2, x509Chain, sslPolicyErrors) => true // ignore https
-                    //        },
-                    //    ConnectivitySettings = new EventStoreClientConnectivitySettings
-                    //    {
-                    //        Address = new Uri(configuration.GetValue<string>("EventStore:ConnectionString"))
-                    //    }
-                    //});
-
-                    //services.AddSingleton(eventStoreClient);
+                    services.AddSingleton<IBPMNRepository, CamundaRepository>(
+                        camundaRepository =>
+                            new CamundaRepository(configuration.GetValue<string>("Camunda:EngineUrl")));
 
                     services.AddHostedService<ConsumerWorker>();
                 });
