@@ -50,9 +50,9 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
             try
             {
                 await _eventStorePersistentSubscription.CreateAsync(
-                    $"$ce-{_eventStoreOptions.AggregateStream}", 
-                    _eventStoreOptions.PersistentSubscriptionGroup, 
-                    new PersistentSubscriptionSettings(startFrom: StreamPosition.End), 
+                    $"$ce-{_eventStoreOptions.AggregateStream}",
+                    _eventStoreOptions.PersistentSubscriptionGroup,
+                    new PersistentSubscriptionSettings(startFrom: StreamPosition.End, resolveLinkTos: true),
                     cancellationToken: stoppingToken);
             }
             catch (InvalidOperationException ex)
@@ -66,54 +66,53 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
 
             _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
 
-            var subscriptionResult = await _eventStorePersistentSubscription.SubscribeAsync(
-                                         $"$ce-{_eventStoreOptions.AggregateStream}",
-                                         _eventStoreOptions.PersistentSubscriptionGroup,
-                                         async (subscription, evt, retryCount, cancelToken) => await HandleEvent(evt),
-                                         cancellationToken: stoppingToken,
-                                         subscriptionDropped: (subscription, reason, e) =>
-                                             {
-                                                 e.ToString();
-                                             });
-
-            subscriptionResult.ToString();
+            await _eventStorePersistentSubscription.SubscribeAsync(
+                $"$ce-{_eventStoreOptions.AggregateStream}",
+                _eventStoreOptions.PersistentSubscriptionGroup,
+                (_, evt, _, _) => HandleEvent(evt),
+                cancellationToken: stoppingToken);
         }
 
         private async Task HandleEvent(ResolvedEvent @event)
         {
-            try
+            if (@event.Event.EventType == "$metadata")
             {
-                var metadata = JsonSerializer.Deserialize<ESMetadata>(Encoding.UTF8.GetString(@event.Event.Metadata.ToArray()));
+                return;
+            }
 
-                if (metadata.ProcessStarter)
+            var metadata = JsonSerializer.Deserialize<ESMetadata>(Encoding.UTF8.GetString(@event.Event.Metadata.Span));
+
+            if (metadata?.ProcessStarter == true)
+            {
+                //event pointed to process starter.
+                var processStarterEvent = JsonSerializer.Deserialize<ProcessStarterEvent>(Encoding.UTF8.GetString(@event.Event.Data.Span));
+
+                var filter = Builders<Process>.Filter.Eq(x => x.ProcessId, processStarterEvent.ProcessId);
+
+                var process = (await _bpmContext.Processes.FindAsync(filter)).FirstOrDefault();
+
+                if (process != null)
                 {
-                    //event pointed to process starter.
-                    var processStarterEvent = JsonSerializer.Deserialize<ProcessStarterEvent>(Encoding.UTF8.GetString(@event.Event.Data.ToArray()));
-
-                    var filter = Builders<Process>.Filter.Eq(x => x.ProcessId, processStarterEvent.ProcessId);
-
-                    var process = (await _bpmContext.Processes.FindAsync(filter)).FirstOrDefault();
-
-                    if (process != null)
-                    {
-                        _logger.LogWarning($"Idempotent Process Exception. Process started with same Id. Process Id: {processStarterEvent.ProcessId}");
-                        return;
-                    }
-
-                    process = new Process()
-                    {
-                        ProcessId = processStarterEvent.ProcessId,
-                        ProcessName = processStarterEvent.ProcessName,
-                        CreationDate = DateTime.UtcNow
-                    };
-
-                    await _bpmContext.Processes.InsertOneAsync(process);
-
-                    _bpmnRepository.StartProcessInstance(processStarterEvent.ProcessName, processStarterEvent.ProcessParameters);
+                    _logger.LogWarning($"Idempotent Process Exception. Process started with same Id. Process Id: {processStarterEvent.ProcessId}");
+                    return;
                 }
 
-                //Redirect to aggregateRoot for apply all events.
+                process = new Process()
+                {
+                    ProcessId = processStarterEvent.ProcessId,
+                    ProcessName = processStarterEvent.ProcessName,
+                    CreationDate = DateTime.UtcNow
+                };
 
+                await _bpmContext.Processes.InsertOneAsync(process);
+
+                _bpmnRepository.StartProcessInstance(processStarterEvent.ProcessName, processStarterEvent.ProcessParameters);
+            }
+
+            //Redirect to aggregateRoot for apply all events.
+
+            if (metadata != null && metadata.StreamId != default)
+            {
                 var events = await _eventRepository.GetAllEvents(metadata.StreamId);
 
                 var manager = new Infrastructure.Aggregates.AggregateManager<TransferAggregateRoot>();
@@ -122,15 +121,7 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
 
                 //Read db için aggregate kullanýlacak
 
-
-
                 //return Task.CompletedTask;
-
-            }
-            catch (Exception ex)
-            {
-
-                throw;
             }
         }
     }

@@ -21,7 +21,7 @@ namespace CoinBazaar.Transfer.Application.CommandHandlers
         {
             var aggregateRoot = new TransferAggregateRoot(Guid.NewGuid());
 
-            var domainEventResult = await aggregateRoot.CreateTransfer(request.FromWallet, request.ToWallet, request.Amount);
+            var domainEventResult = aggregateRoot.CreateTransfer(request.FromWallet, request.ToWallet, request.Amount);
 
             return await _eventRepository.Publish(domainEventResult);
         }

@@ -12,6 +12,7 @@ using System;
 namespace CoinBazaar.Transfer.ESConsumer.gRPC
 {
     using System.Net.Http;
+    using System.Net.Security;
     using System.Security.Cryptography.X509Certificates;
 
     public class Program
@@ -30,12 +31,6 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
                     EventStoreOptions options = configuration.GetSection("EventStore").Get<EventStoreOptions>();
                     services.AddSingleton(options);
 
-                    var eventStoreConnection = EventStoreClientSettings.Create(connectionString: configuration.GetValue<string>("EventStore:ConnectionString"));
-
-                    //var eventStoreClient = new EventStoreClient(eventStoreConnection);
-
-                    //services.AddSingleton(eventStoreClient);
-
                     services.AddSingleton<IEventRepository, EventRepository>(
                         eventRepository => new EventRepository(
                             eventRepository.GetService<EventStoreClient>(),
@@ -47,12 +42,7 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
                     var bpmContext = new BPMContext(mongoConfig.MongoDB);
 
                     services.AddSingleton(bpmContext);
-                    services.AddEventStorePersistentSubscriptionsClient(
-                        configuration.GetValue<string>("EventStore:ConnectionString"),
-                        x => x.CreateHttpMessageHandler = () => new HttpClientHandler
-                                                                                {
-                                                                                    ServerCertificateCustomValidationCallback = (_, _, _, _) => true
-                                                                                });
+                    services.AddEventStorePersistentSubscriptionsClient(configuration.GetValue<string>("EventStore:ConnectionString"));
 
                     services.AddSingleton<IBPMNRepository, CamundaRepository>(
                         camundaRepository =>
