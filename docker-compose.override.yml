@@ -6,20 +6,20 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
     ports:
-      - "80"
-      - "443"
+      - "5001:80"
+      - "5002:443"
     volumes:
-      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+      - ~/ASP.NET/Https:/root/.aspnet/https:ro
   coinbazaar.wallet.api:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=https://+:443;http://+:80
     ports:
-      - "80"
-      - "443"
+      - "5003:80"
+      - "5004:443"
     volumes:
-      - ${APPDATA}/ASP.NET/Https:/root/.aspnet/https:ro
+      - ~/ASP.NET/Https:/root/.aspnet/https:ro
 
   coinbazaar.transfer.esconsumer.grpc:
     volumes:
-      - ${APPDATA}/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro
+      - ~/Microsoft/UserSecrets:/root/.microsoft/usersecrets:ro

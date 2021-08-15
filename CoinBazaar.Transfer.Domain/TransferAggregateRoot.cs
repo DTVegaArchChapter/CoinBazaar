@@ -32,11 +32,9 @@ namespace CoinBazaar.Transfer.Domain
 
             foreach (var @event in events)
             {
-                var eventString = Encoding.UTF8.GetString(@event.Data.ToArray());
+                var eventString = Encoding.UTF8.GetString(@event.Data.Span);
 
-                //@event.EventType
-
-                var eventObj = JsonSerializer.Deserialize(eventString, Type.GetType("CoinBazaar.Transfer.Domain.Events." + @event.EventType + ", CoinBazaar.Transfer.Domain"));
+                var eventObj = JsonSerializer.Deserialize(eventString, Type.GetType(@event.EventType));
 
                 switch (eventObj)
                 {
@@ -57,7 +55,7 @@ namespace CoinBazaar.Transfer.Domain
             Amount = e.Amount;
         }
 
-        public async Task<DomainEventResult> CreateTransfer(string fromWallet, string toWallet, decimal amount)
+        public DomainEventResult CreateTransfer(string fromWallet, string toWallet, decimal amount)
         {
             var processParameters = new List<KeyValuePair<string, object>>();
             processParameters.Add(new KeyValuePair<string, object>("TransferId", TransferId));
@@ -67,7 +65,7 @@ namespace CoinBazaar.Transfer.Domain
 
             var @event = new TransferCreated(fromWallet, toWallet, amount, Guid.NewGuid(), processParameters);
 
-            return await DomainResponseHelper.CreateDomainResponse(TransferId, true, @event, null);
+            return DomainResponseHelper.CreateDomainResponse(TransferId, true, @event, null);
         }
 
         //public async Task<DomainEventResult> AmountChange(decimal changedAmount)

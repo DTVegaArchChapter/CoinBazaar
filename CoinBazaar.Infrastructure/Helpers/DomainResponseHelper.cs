@@ -1,16 +1,17 @@
-﻿using CoinBazaar.Infrastructure.EventBus;
-using EventStore.Client;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-
-namespace CoinBazaar.Infrastructure.Helpers
+﻿namespace CoinBazaar.Infrastructure.Helpers
 {
+    using System;
+    using System.Collections.Generic;
+    using System.Text;
+    using System.Text.Json;
+
+    using CoinBazaar.Infrastructure.EventBus;
+
+    using EventStore.Client;
+
     public static class DomainResponseHelper
     {
-        public static async Task<DomainEventResult> CreateDomainResponse(Guid aggregateId, bool processStarter, object @event, params KeyValuePair<string, object>[] responseParameters)
+        public static DomainEventResult CreateDomainResponse(Guid aggregateId, bool processStarter, object @event, params KeyValuePair<string, object>[] responseParameters)
         {
             ESMetadata metadata = new ESMetadata(aggregateId, processStarter, DateTime.UtcNow, "DummyUser");
 
@@ -20,7 +21,7 @@ namespace CoinBazaar.Infrastructure.Helpers
                 AggregateId = aggregateId,
                 EventData = new EventData(
                     Uuid.NewUuid(),
-                    @event.GetType().Name,
+                    @event.GetType().AssemblyQualifiedName,
                     Encoding.UTF8.GetBytes(JsonSerializer.Serialize(@event)),
                     Encoding.UTF8.GetBytes(JsonSerializer.Serialize(metadata))
                     ),

@@ -6,58 +6,67 @@ services:
     build:
       context: .
       dockerfile: CoinBazaar.Transfer.API/Dockerfile
+    depends_on:
+      - eventstore.db
 
   coinbazaar.wallet.api:
     image: ${DOCKER_REGISTRY-}coinbazaarwalletapi
     build:
       context: .
       dockerfile: CoinBazaar.Wallet.API/Dockerfile
-  #mongo:
-  #  image: mongo
-  #  restart: always
-  #  environment:
-  #    MONGO_INITDB_ROOT_USERNAME: root
-  #    MONGO_INITDB_ROOT_PASSWORD: example
-  #  ports:
-  #    - 27017:27017
-  #mongo-express:
-  #  image: mongo-express
-  #  restart: always
-  #  ports:
-  #    - 8081:8081
-  #  environment:
-  #    ME_CONFIG_MONGODB_ADMINUSERNAME: root
-  #    ME_CONFIG_MONGODB_ADMINPASSWORD: example
-  #  depends_on:
-  #    - mongo
+
   coinbazaar.transfer.esconsumer.grpc:
     image: ${DOCKER_REGISTRY-}coinbazaartransferesconsumergrpc
     build:
       context: .
       dockerfile: CoinBazaar.Transfer.ESConsumer.gRPC/Dockerfile
-#  eventstore.db:
-#    image: eventstore/eventstore:latest
-#    environment:
-#      - EVENTSTORE_CLUSTER_SIZE=1
-#      - EVENTSTORE_RUN_PROJECTIONS=All
-#      - EVENTSTORE_START_STANDARD_PROJECTIONS=true
-#      - EVENTSTORE_EXT_TCP_PORT=1113
-#      - EVENTSTORE_EXT_HTTP_PORT=2113
-#      - EVENTSTORE_INSECURE=true
-#      - EVENTSTORE_ENABLE_EXTERNAL_TCP=true
-#      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
-#    ports:
-#      - "1113:1113"
-#      - "2113:2113"
-#    volumes:
-#      - type: volume
-#        source: eventstore-volume-data
-#        target: /var/lib/eventstore
-#      - type: volume
-#        source: eventstore-volume-logs
-#        target: /var/log/eventstore
+    depends_on:
+      - eventstore.db
+      - mongo
 
-#volumes:
-#  eventstore-volume-data:
-#  eventstore-volume-logs:
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    ports:
+      - 27017:27017
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: example
+    depends_on:
+      - mongo
+
+  eventstore.db:
+    image: eventstore/eventstore:latest
+    environment:
+      - EVENTSTORE_CLUSTER_SIZE=1
+      - EVENTSTORE_RUN_PROJECTIONS=All
+      - EVENTSTORE_START_STANDARD_PROJECTIONS=true
+      - EVENTSTORE_EXT_TCP_PORT=1113
+      - EVENTSTORE_HTTP_PORT=2113
+      - EVENTSTORE_INSECURE=true
+      - EVENTSTORE_ENABLE_EXTERNAL_TCP=true
+      - EVENTSTORE_ENABLE_ATOM_PUB_OVER_HTTP=true
+    ports:
+      - "1113:1113"
+      - "2113:2113"
+    volumes:
+      - type: volume
+        source: eventstore-volume-data
+        target: /var/lib/eventstore
+      - type: volume
+        source: eventstore-volume-logs
+        target: /var/log/eventstore
+
+volumes:
+  eventstore-volume-data:
+  eventstore-volume-logs:
 
