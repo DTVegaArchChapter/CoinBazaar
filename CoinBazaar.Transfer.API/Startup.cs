@@ -1,19 +1,23 @@
-using Autofac;
-using Autofac.Extensions.DependencyInjection;
-using CoinBazaar.Infrastructure.EventBus;
-using CoinBazaar.Transfer.Application.CommandHandlers;
-using CoinBazaar.Transfer.Application.Infrastructure.AutofacModules;
-using EventStore.Client;
-using MediatR;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.OpenApi.Models;
-
 namespace CoinBazaar.Transfer.API
 {
+    using Autofac;
+    using Autofac.Extensions.DependencyInjection;
+
+    using CoinBazaar.Infrastructure.EventBus;
+    using CoinBazaar.Transfer.Application.CommandHandlers;
+    using CoinBazaar.Transfer.Application.Infrastructure.AutofacModules;
+
+    using EventStore.Client;
+
+    using MediatR;
+
+    using Microsoft.AspNetCore.Builder;
+    using Microsoft.AspNetCore.Hosting;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Hosting;
+    using Microsoft.OpenApi.Models;
+
     public class Startup
     {
         public Startup(IConfiguration configuration)
@@ -33,18 +37,9 @@ namespace CoinBazaar.Transfer.API
             services.AddAutoMapper(typeof(Startup));
             services.AddMediatR(typeof(TransferCommandHandler));
 
-            var eventStoreConnection = EventStoreClientSettings.Create(
-                connectionString: Configuration.GetValue<string>("EventStore:ConnectionString"));
-
-            var eventStoreClient = new EventStoreClient(eventStoreConnection);
-
-            services.AddSingleton(eventStoreClient);
-
-            services.AddScoped<IEventRepository, EventRepository>(eventRepository =>
-            new EventRepository(
-                eventRepository.GetService<EventStoreClient>(),
-                Configuration.GetValue<string>("EventStore:AggregateStream"))
-            );
+            services.AddSingleton(new EventStoreClient(EventStoreClientSettings.Create(Configuration.GetValue<string>("EventStore:ConnectionString"))));
+            services.AddSingleton<IEventStoreDbClient>(s => new EventStoreDbClient(s.GetRequiredService<EventStoreClient>()));
+            services.AddSingleton<IEventSourceRepository>(s => new EventSourceRepository(s.GetRequiredService<IEventStoreDbClient>()));
 
             var container = new ContainerBuilder();
             container.Populate(services);

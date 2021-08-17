@@ -1,76 +1,61 @@
-﻿using CoinBazaar.Infrastructure.Aggregates;
-using CoinBazaar.Infrastructure.Annotations;
-using CoinBazaar.Infrastructure.EventBus;
-using CoinBazaar.Infrastructure.Helpers;
-using CoinBazaar.Transfer.Domain.Events;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-
-namespace CoinBazaar.Transfer.Domain
+﻿namespace CoinBazaar.Transfer.Domain
 {
+    using System;
+    using System.Collections.Generic;
+
+    using CoinBazaar.Infrastructure.Aggregates;
+    using CoinBazaar.Infrastructure.Annotations;
+    using CoinBazaar.Infrastructure.EventBus;
+    using CoinBazaar.Transfer.Domain.Events;
+
     [StreamName("Transfer")]
-    public class TransferAggregateRoot : IAggregateRoot
+    public class TransferAggregateRoot : AggregateRoot
     {
-        #region Properties
         public Guid TransferId { get; set; }
         public string FromWallet { get; set; }
         public string ToWallet { get; set; }
         public decimal Amount { get; set; }
-        #endregion
 
-        public TransferAggregateRoot(Guid transferId)
+        public TransferAggregateRoot()
         {
-            TransferId = transferId;
         }
 
-        public TransferAggregateRoot(Guid transferId, List<ResolvedEventDTO> events)
+        public TransferAggregateRoot(Guid transferId, string fromWallet, string toWallet, decimal amount)
         {
+            AggregateId = transferId;
             TransferId = transferId;
+            FromWallet = fromWallet;
+            ToWallet = toWallet;
+            Amount = amount;
 
-            foreach (var @event in events)
-            {
-                var eventString = Encoding.UTF8.GetString(@event.Data.Span);
+            var processParameters = new List<KeyValuePair<string, object>>
+                                        {
+                                            new("TransferId", TransferId),
+                                            new("FromWallet", fromWallet),
+                                            new("ToWallet", toWallet),
+                                            new("Amount", amount)
+                                        };
 
-                var eventObj = JsonSerializer.Deserialize(eventString, Type.GetType(@event.EventType));
+            RaiseEvent(new TransferCreated(transferId, fromWallet, toWallet, amount, Guid.NewGuid(), processParameters));
+        }
 
-                switch (eventObj)
-                {
-                    case TransferCreated e:
-                        Apply(e);
-                        break;
-
-                    default:
-                        break;
-                }
+        protected override void When(IEvent @event)
+        {
+            switch (@event)
+            { 
+                case TransferCreated e:
+                    OnTransferCreated(e);
+                    break;
             }
         }
 
-        private void Apply(TransferCreated e)
+        private void OnTransferCreated(TransferCreated e)
         {
+            AggregateId = e.AggregateId;
+            TransferId = e.AggregateId;
             FromWallet = e.FromWallet;
             ToWallet = e.ToWallet;
             Amount = e.Amount;
         }
-
-        public DomainEventResult CreateTransfer(string fromWallet, string toWallet, decimal amount)
-        {
-            var processParameters = new List<KeyValuePair<string, object>>();
-            processParameters.Add(new KeyValuePair<string, object>("TransferId", TransferId));
-            processParameters.Add(new KeyValuePair<string, object>("FromWallet", fromWallet));
-            processParameters.Add(new KeyValuePair<string, object>("ToWallet", toWallet));
-            processParameters.Add(new KeyValuePair<string, object>("Amount", amount));
-
-            var @event = new TransferCreated(fromWallet, toWallet, amount, Guid.NewGuid(), processParameters);
-
-            return DomainResponseHelper.CreateDomainResponse(TransferId, true, @event, null);
-        }
-
-        //public async Task<DomainEventResult> AmountChange(decimal changedAmount)
-        //{
-        //   new AmountChanged() { Amount = Amount + changedAmount };
-        //}
     }
 }

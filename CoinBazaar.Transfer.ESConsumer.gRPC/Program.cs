@@ -1,19 +1,15 @@
-using CoinBazaar.Infrastructure.Camunda;
-using CoinBazaar.Infrastructure.EventBus;
-using CoinBazaar.Infrastructure.Mongo;
-using CoinBazaar.Infrastructure.Mongo.Data;
-using EventStore.Client;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using System;
-//using System.Net.Http;
-
 namespace CoinBazaar.Transfer.ESConsumer.gRPC
 {
-    using System.Net.Http;
-    using System.Net.Security;
-    using System.Security.Cryptography.X509Certificates;
+    using CoinBazaar.Infrastructure.Camunda;
+    using CoinBazaar.Infrastructure.EventBus;
+    using CoinBazaar.Infrastructure.Mongo;
+    using CoinBazaar.Infrastructure.Mongo.Data;
+
+    using EventStore.Client;
+
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Hosting;
 
     public class Program
     {
@@ -26,15 +22,14 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
-                    IConfiguration configuration = hostContext.Configuration;
+                    var configuration = hostContext.Configuration;
 
-                    EventStoreOptions options = configuration.GetSection("EventStore").Get<EventStoreOptions>();
-                    services.AddSingleton(options);
+                    var eventStoreOptions = configuration.GetSection("EventStore").Get<EventStoreOptions>();
+                    services.AddSingleton(eventStoreOptions);
 
-                    services.AddSingleton<IEventRepository, EventRepository>(
-                        eventRepository => new EventRepository(
-                            eventRepository.GetService<EventStoreClient>(),
-                            configuration.GetValue<string>("EventStore:AggregateStream")));
+                    services.AddSingleton(new EventStoreClient(EventStoreClientSettings.Create(eventStoreOptions.ConnectionString)));
+                    services.AddSingleton<IEventStoreDbClient>(s => new EventStoreDbClient(s.GetRequiredService<EventStoreClient>()));
+                    services.AddSingleton<IEventSourceRepository>(s => new EventSourceRepository(s.GetRequiredService<IEventStoreDbClient>()));
 
                     var mongoConfig = new MongoServerConfig();
                     configuration.Bind(mongoConfig);
@@ -42,11 +37,9 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
                     var bpmContext = new BPMContext(mongoConfig.MongoDB);
 
                     services.AddSingleton(bpmContext);
-                    services.AddEventStorePersistentSubscriptionsClient(configuration.GetValue<string>("EventStore:ConnectionString"));
+                    services.AddEventStorePersistentSubscriptionsClient(eventStoreOptions.ConnectionString);
 
-                    services.AddSingleton<IBPMNRepository, CamundaRepository>(
-                        camundaRepository =>
-                            new CamundaRepository(configuration.GetValue<string>("Camunda:EngineUrl")));
+                    services.AddSingleton<IBPMNRepository, CamundaRepository>(_ => new CamundaRepository(configuration.GetValue<string>("Camunda:EngineUrl")));
 
                     services.AddHostedService<ConsumerWorker>();
                 });

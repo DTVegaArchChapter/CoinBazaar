@@ -1,12 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace CoinBazaar.Infrastructure.EventBus
+﻿namespace CoinBazaar.Infrastructure.EventBus
 {
+    using System;
+    using System.Collections.Generic;
+
     public interface IProcessStarterEvent
     {
         public Guid ProcessId { get; set; }
+
         public string ProcessName { get; set; }
+
         public IList<KeyValuePair<string, object>> ProcessParameters { get; set; }
     }
 }
