@@ -25,7 +25,7 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
         private readonly EventStoreOptions _eventStoreOptions;
         private readonly BPMContext _bpmContext;
         private readonly IBPMNRepository _bpmnRepository;
-        private readonly IEventRepository _eventRepository;
+        private readonly IEventSourceRepository _eventRepository;
 
         public ConsumerWorker(
             ILogger<ConsumerWorker> logger,
@@ -33,7 +33,7 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
             EventStoreOptions eventStoreOptions,
             BPMContext bpmContext,
             IBPMNRepository bpmnRepository,
-            IEventRepository eventRepository)
+            IEventSourceRepository eventRepository)
         {
             _logger = logger;
             _eventStorePersistentSubscription = eventStorePersistentSubscription;
@@ -80,7 +80,7 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
                 return;
             }
 
-            var metadata = JsonSerializer.Deserialize<ESMetadata>(Encoding.UTF8.GetString(@event.Event.Metadata.Span));
+            var metadata = JsonSerializer.Deserialize<EventSourceMetadata>(Encoding.UTF8.GetString(@event.Event.Metadata.Span));
 
             if (metadata?.ProcessStarter == true)
             {
@@ -113,11 +113,7 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
 
             if (metadata != null && metadata.StreamId != default)
             {
-                var events = await _eventRepository.GetAllEvents(metadata.StreamId);
-
-                var manager = new Infrastructure.Aggregates.AggregateManager<TransferAggregateRoot>();
-
-                var aggregateRoot = manager.ApplyAll(metadata.StreamId, events);
+                var aggregateRoot = await _eventRepository.FindByIdAsync<TransferAggregateRoot>(metadata.StreamId).ConfigureAwait(false);
 
                 //Read db için aggregate kullanýlacak
 

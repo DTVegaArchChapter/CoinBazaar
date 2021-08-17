@@ -13,8 +13,9 @@ namespace CoinBazaar.Transfer.Domain.Events
         public string ProcessName { get; set; }
         public IList<KeyValuePair<string, object>> ProcessParameters { get; set; }
 
-        public TransferCreated(string fromWallet, string toWallet, decimal amount, Guid processId, IList<KeyValuePair<string, object>> processParameters)
+        public TransferCreated(Guid id, string fromWallet, string toWallet, decimal amount, Guid processId, IList<KeyValuePair<string, object>> processParameters)
         {
+            AggregateId = id;
             FromWallet = fromWallet;
             ToWallet = toWallet;
             Amount = amount;

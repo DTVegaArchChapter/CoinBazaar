@@ -5,16 +5,14 @@ namespace CoinBazaar.Infrastructure.EventBus
 {
     public class EventBase : IEvent
     {
-        [JsonInclude]
         public Guid Id { get; set; }
 
-        [JsonInclude]
-        public int Version { get; set; }
+        public Guid AggregateId { get; protected set; }
 
-        [JsonInclude]
+        public long Version { get; set; }
+
         public DateTime CreationDate { get; private init; }
 
-        [JsonConstructor]
         public EventBase()
         {
             Id = Guid.NewGuid();

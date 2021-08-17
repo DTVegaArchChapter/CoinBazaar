@@ -1,11 +1,11 @@
-﻿using System;
-
-namespace CoinBazaar.Infrastructure.Models
+﻿namespace CoinBazaar.Infrastructure.Models
 {
-    public class DomainCommandResponse
+    using System;
+
+    public sealed class DomainCommandResponse
     {
         public Guid AggregateId { get; set; }
-        public Guid EventId { get; set; }
+
         public DateTime CreationDate { get; set; }
     }
 }

@@ -1,9 +1,13 @@
-﻿using System;
-
-namespace CoinBazaar.Infrastructure.EventBus
+﻿namespace CoinBazaar.Infrastructure.EventBus
 {
+    using System;
+
     public interface IEvent
     {
-        public Guid Id { get; set; }
+        Guid Id { get; set; }
+
+        Guid AggregateId { get; }
+
+        long Version { get; set; }
     }
 }
