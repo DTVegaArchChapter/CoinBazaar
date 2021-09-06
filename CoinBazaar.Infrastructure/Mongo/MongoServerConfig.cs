@@ -2,6 +2,7 @@
 {
     public class MongoServerConfig
     {
-        public MongoDBConfig MongoDB { get; set; } = new MongoDBConfig();
+        public MongoDBConfig MongoBPMDB { get; set; } = new MongoDBConfig();
+        public MongoDBConfig MongoTransferDB { get; set; } = new MongoDBConfig();
     }
 }

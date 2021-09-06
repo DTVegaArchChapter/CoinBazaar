@@ -9,10 +9,11 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
     using CoinBazaar.Infrastructure.Camunda;
     using CoinBazaar.Infrastructure.EventBus;
     using CoinBazaar.Infrastructure.Mongo.Data;
+    using CoinBazaar.Infrastructure.Mongo.Data.Transfer;
     using CoinBazaar.Transfer.Domain;
 
     using EventStore.Client;
-
+    using global::AutoMapper;
     using Microsoft.Extensions.Hosting;
     using Microsoft.Extensions.Logging;
 
@@ -24,16 +25,20 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
         private readonly EventStorePersistentSubscriptionsClient _eventStorePersistentSubscription;
         private readonly EventStoreOptions _eventStoreOptions;
         private readonly BPMContext _bpmContext;
+        private readonly TransferStateModelContext _transferStateModelContext;
         private readonly IBPMNRepository _bpmnRepository;
         private readonly IEventSourceRepository _eventRepository;
+        private readonly IMapper _mapper;
 
         public ConsumerWorker(
             ILogger<ConsumerWorker> logger,
             EventStorePersistentSubscriptionsClient eventStorePersistentSubscription,
             EventStoreOptions eventStoreOptions,
             BPMContext bpmContext,
+            TransferStateModelContext transferStateModelContext,
             IBPMNRepository bpmnRepository,
-            IEventSourceRepository eventRepository)
+            IEventSourceRepository eventRepository,
+            IMapper mapper)
         {
             _logger = logger;
             _eventStorePersistentSubscription = eventStorePersistentSubscription;
@@ -41,6 +46,8 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
             _bpmContext = bpmContext;
             _bpmnRepository = bpmnRepository;
             _eventRepository = eventRepository;
+            _transferStateModelContext = transferStateModelContext;
+            _mapper = mapper;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -84,29 +91,38 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
 
             if (metadata?.ProcessStarter == true)
             {
-                //event pointed to process starter.
-                var processStarterEvent = JsonSerializer.Deserialize<ProcessStarterEvent>(Encoding.UTF8.GetString(@event.Event.Data.Span));
-
-                var filter = Builders<Process>.Filter.Eq(x => x.ProcessId, processStarterEvent.ProcessId);
-
-                var process = (await _bpmContext.Processes.FindAsync(filter)).FirstOrDefault();
-
-                if (process != null)
+                try
                 {
-                    _logger.LogWarning($"Idempotent Process Exception. Process started with same Id. Process Id: {processStarterEvent.ProcessId}");
-                    return;
+                    //event pointed to process starter.
+                    var processStarterEvent = JsonSerializer.Deserialize<ProcessStarterEvent>(Encoding.UTF8.GetString(@event.Event.Data.Span));
+
+                    var filter = Builders<Process>.Filter.Eq(x => x.ProcessId, processStarterEvent.ProcessId);
+
+                    var process = (await _bpmContext.Processes.FindAsync(filter)).FirstOrDefault();
+
+                    if (process != null)
+                    {
+                        _logger.LogWarning($"Idempotent Process Exception. Process started with same Id. Process Id: {processStarterEvent.ProcessId}");
+                    }
+                    else
+                    {
+                        process = new Process()
+                        {
+                            ProcessId = processStarterEvent.ProcessId,
+                            ProcessName = processStarterEvent.ProcessName,
+                            CreationDate = DateTime.UtcNow
+                        };
+
+                        await _bpmContext.Processes.InsertOneAsync(process);
+
+                        _bpmnRepository.StartProcessInstance(processStarterEvent.ProcessName, processStarterEvent.ProcessParameters);
+                    }
                 }
-
-                process = new Process()
+                catch (Exception ex)
                 {
-                    ProcessId = processStarterEvent.ProcessId,
-                    ProcessName = processStarterEvent.ProcessName,
-                    CreationDate = DateTime.UtcNow
-                };
 
-                await _bpmContext.Processes.InsertOneAsync(process);
-
-                _bpmnRepository.StartProcessInstance(processStarterEvent.ProcessName, processStarterEvent.ProcessParameters);
+                    throw;
+                }
             }
 
             //Redirect to aggregateRoot for apply all events.
@@ -114,6 +130,12 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
             if (metadata != null && metadata.StreamId != default)
             {
                 var aggregateRoot = await _eventRepository.FindByIdAsync<TransferAggregateRoot>(metadata.StreamId).ConfigureAwait(false);
+
+                var filter = Builders<TransferModel>.Filter.Eq(x => x.TransferId, aggregateRoot.TransferId);
+
+                var transferModel = _mapper.Map<TransferModel>(aggregateRoot);
+
+                var result = await _transferStateModelContext.Transfers.ReplaceOneAsync(filter, transferModel, new ReplaceOptions() { IsUpsert = true });
 
                 //Read db için aggregate kullanýlacak
 

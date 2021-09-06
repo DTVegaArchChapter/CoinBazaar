@@ -4,7 +4,7 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
     using CoinBazaar.Infrastructure.EventBus;
     using CoinBazaar.Infrastructure.Mongo;
     using CoinBazaar.Infrastructure.Mongo.Data;
-
+    using CoinBazaar.Infrastructure.Mongo.Data.Transfer;
     using EventStore.Client;
 
     using Microsoft.Extensions.Configuration;
@@ -31,12 +31,18 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
                     services.AddSingleton<IEventStoreDbClient>(s => new EventStoreDbClient(s.GetRequiredService<EventStoreClient>()));
                     services.AddSingleton<IEventSourceRepository>(s => new EventSourceRepository(s.GetRequiredService<IEventStoreDbClient>()));
 
+                    services.AddAutoMapper(typeof(Program));
+
                     var mongoConfig = new MongoServerConfig();
                     configuration.Bind(mongoConfig);
 
-                    var bpmContext = new BPMContext(mongoConfig.MongoDB);
+                    var bpmContext = new BPMContext(mongoConfig.MongoBPMDB);
+
+                    var transferContext = new TransferStateModelContext(mongoConfig.MongoTransferDB);
 
                     services.AddSingleton(bpmContext);
+                    services.AddSingleton(transferContext);
+
                     services.AddEventStorePersistentSubscriptionsClient(eventStoreOptions.ConnectionString);
 
                     services.AddSingleton<IBPMNRepository, CamundaRepository>(_ => new CamundaRepository(configuration.GetValue<string>("Camunda:EngineUrl")));
