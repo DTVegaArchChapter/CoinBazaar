@@ -16,7 +16,7 @@
                     return $@"mongodb://{Host}:{Port}";
                 }
 
-                return $@"mongodb://{User}:{Password}@{Host}:{Port}/{Database}?connect=replicaSet";
+                return $@"mongodb://{User}:{Password}@{Host}:{Port}/{Database}?authSource=admin&ssl=false";
             }
         }
     }
