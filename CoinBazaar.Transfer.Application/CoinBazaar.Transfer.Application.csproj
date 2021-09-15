@@ -5,9 +5,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="QueryHandler\**" />
+    <Compile Remove="Query\**" />
+    <EmbeddedResource Remove="QueryHandler\**" />
+    <EmbeddedResource Remove="Query\**" />
+    <None Remove="QueryHandler\**" />
+    <None Remove="Query\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Infrastructure\Middleware\" />
-    <Folder Include="QueryHandler\" />
-    <Folder Include="Query\" />
   </ItemGroup>
 
   <ItemGroup>

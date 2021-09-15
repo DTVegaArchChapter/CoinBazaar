@@ -1,8 +1,10 @@
 ﻿using AutoMapper;
 using CoinBazaar.Transfer.API.Requests;
 using CoinBazaar.Transfer.Application.Commands;
+using CoinBazaar.Transfer.Application.Queries;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using System;
 using System.Threading.Tasks;
 
 namespace CoinBazaar.Transfer.API.Controllers
@@ -23,6 +25,14 @@ namespace CoinBazaar.Transfer.API.Controllers
         public async Task<IActionResult> CreateTransferAsync(CreateTransferRequest request)
         {
             var domainResponse = await _mediator.Send(_mapper.Map<CreateTransferCommand>(request));
+
+            return Ok(domainResponse);
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetTransferAsync(Guid id)
+        {
+            var domainResponse = await _mediator.Send(new GetTransferQuery() { TransferId = id });
 
             return Ok(domainResponse);
         }

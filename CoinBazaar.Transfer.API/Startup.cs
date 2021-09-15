@@ -4,6 +4,8 @@ namespace CoinBazaar.Transfer.API
     using Autofac.Extensions.DependencyInjection;
 
     using CoinBazaar.Infrastructure.EventBus;
+    using CoinBazaar.Infrastructure.Mongo;
+    using CoinBazaar.Infrastructure.Mongo.Data.Transfer;
     using CoinBazaar.Transfer.Application.CommandHandlers;
     using CoinBazaar.Transfer.Application.Infrastructure.AutofacModules;
 
@@ -17,6 +19,9 @@ namespace CoinBazaar.Transfer.API
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
     using Microsoft.OpenApi.Models;
+    using MongoDB.Bson;
+    using MongoDB.Bson.Serialization;
+    using MongoDB.Bson.Serialization.Serializers;
 
     public class Startup
     {
@@ -43,6 +48,12 @@ namespace CoinBazaar.Transfer.API
 
             var container = new ContainerBuilder();
             container.Populate(services);
+
+            var mongoConfig = new MongoServerConfig();
+            Configuration.Bind(mongoConfig);
+
+            var transferContext = new TransferStateModelContext(mongoConfig.MongoTransferDB);
+            services.AddSingleton(transferContext);
 
             container.RegisterModule(new MediatorModule());
             container.RegisterModule(new ApplicationModule(Configuration["ConnectionString"]));
