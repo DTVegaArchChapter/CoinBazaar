@@ -70,14 +70,25 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
                 }
             }
 
-
             _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
 
             await _eventStorePersistentSubscription.SubscribeAsync(
                 $"$ce-{_eventStoreOptions.AggregateStream}",
                 _eventStoreOptions.PersistentSubscriptionGroup,
-                (_, evt, _, _) => HandleEvent(evt),
-                cancellationToken: stoppingToken);
+                async (subscription, @event, retryCount, cancellationToken) =>
+                {
+                    try
+                    {
+                        await HandleEvent(@event);
+                        await subscription.Ack(@event);
+                    }
+                    catch (Exception ex)
+                    {
+                        await subscription.Nack(PersistentSubscriptionNakEventAction.Park, ex.Message, @event);
+                    }
+                },
+                cancellationToken: stoppingToken,
+                autoAck: false);
         }
 
         private async Task HandleEvent(ResolvedEvent @event)
@@ -121,7 +132,7 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
                 catch (Exception ex)
                 {
 
-                    throw;
+                    //throw;
                 }
             }
 
@@ -131,7 +142,7 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
             {
                 var aggregateRoot = await _eventRepository.FindByIdAsync<TransferAggregateRoot>(metadata.StreamId).ConfigureAwait(false);
 
-                var filter = Builders<TransferModel>.Filter.Eq(x => x.TransferId, aggregateRoot.TransferId);
+                var filter = Builders<TransferModel>.Filter.Eq(x => x.TransferId, aggregateRoot.TransferId.ToString());
 
                 var transferModel = _mapper.Map<TransferModel>(aggregateRoot);
 

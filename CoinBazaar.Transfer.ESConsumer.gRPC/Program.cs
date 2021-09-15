@@ -37,7 +37,6 @@ namespace CoinBazaar.Transfer.ESConsumer.gRPC
                     configuration.Bind(mongoConfig);
 
                     var bpmContext = new BPMContext(mongoConfig.MongoBPMDB);
-
                     var transferContext = new TransferStateModelContext(mongoConfig.MongoTransferDB);
 
                     services.AddSingleton(bpmContext);

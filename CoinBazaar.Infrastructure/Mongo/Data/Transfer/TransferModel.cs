@@ -4,14 +4,12 @@ using System;
 
 namespace CoinBazaar.Infrastructure.Mongo.Data.Transfer
 {
+    [BsonIgnoreExtraElements]
     public class TransferModel
     {
-        [BsonId]
-        public ObjectId InternalId { get; set; }
-        public Guid TransferId { get; set; }
-        public Guid FromWalletId { get; set; }
-        public Guid ToWalletId { get; set; }
+        public string TransferId { get; set; }
+        public string FromWallet { get; set; }
+        public string ToWallet { get; set; }
         public decimal Amount { get; set; }
-        public DateTime CreationDate { get; set; }
     }
 }
