@@ -1,0 +1,19 @@
+﻿
+@inject HttpClient Http
+
+<form>
+    <div class="form-group">
+        <label for="exampleInputFromWallet">From Wallet</label>
+        <input type="text" @bind="FromWallet" class="form-control" id="exampleInputFromWallet" aria-describedby="FromWallet" placeholder="Enter From Wallet">
+    </div>
+    <div class="form-group">
+        <label for="exampleInputToWallet">To Wallet</label>
+        <input type="text" @bind="ToWallet" class="form-control" id="exampleInputToWallet" aria-describedby="ToWallet" placeholder="Enter To Wallet">
+    </div>
+    <div class="form-group">
+        <label for="exampleInputAmount">Amount</label>
+        <input type="number" @bind="Amount" class="form-control" id="exampleInputAmount" aria-describedby="Amount" placeholder="Enter Amount">
+    </div>
+
+    <button type="submit" @onclick="SendItem" @onblur ="Test"  class="btn btn-primary">Submit</button>
+</form>

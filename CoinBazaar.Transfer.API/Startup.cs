@@ -12,7 +12,7 @@ namespace CoinBazaar.Transfer.API
     using EventStore.Client;
 
     using MediatR;
-
+    using Microsoft.AspNetCore.Authentication.Certificate;
     using Microsoft.AspNetCore.Builder;
     using Microsoft.AspNetCore.Hosting;
     using Microsoft.Extensions.Configuration;
@@ -57,6 +57,17 @@ namespace CoinBazaar.Transfer.API
 
             container.RegisterModule(new MediatorModule());
             container.RegisterModule(new ApplicationModule(Configuration["ConnectionString"]));
+
+            services.AddCors(policy =>
+            {
+                policy.AddPolicy("CorsPolicy", opt => opt
+                    .AllowAnyOrigin()
+                    .AllowAnyHeader()
+                    .AllowAnyMethod());
+            });
+
+            services.AddAuthentication( CertificateAuthenticationDefaults.AuthenticationScheme).AddCertificate();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -67,6 +78,13 @@ namespace CoinBazaar.Transfer.API
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "CoinBazaar.Transfer.API v1"));
+                app.UseDeveloperExceptionPage();
+                app.UseCors("CorsPolicy");
+            }
+            else
+            {
+                app.UseExceptionHandler("/Error");
+                app.UseHsts();
             }
 
             app.UseHttpsRedirection();
@@ -79,6 +97,7 @@ namespace CoinBazaar.Transfer.API
             {
                 endpoints.MapControllers();
             });
+
         }
     }
 }
